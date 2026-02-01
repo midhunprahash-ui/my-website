@@ -1,0 +1,52 @@
+@use '../../../styles/tokens' as *;
+
+.section {
+    padding: $spacing-xl $spacing-md;
+    background-color: $color-bg;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.heading {
+    font-family: $font-family-serif;
+    font-size: 2.5rem;
+    margin-bottom: $spacing-lg;
+    color: $color-text;
+    text-align: center;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: $spacing-md;
+}
+
+.card {
+    background-color: rgba($color-surface, 0.5);
+    padding: $spacing-md;
+    border-radius: 8px;
+    border: 1px solid rgba($color-text, 0.1);
+    transition: transform $transition-normal;
+
+    &:hover {
+        transform: translateY(-5px);
+        border-color: rgba($color-text, 0.3);
+    }
+}
+
+.cardTitle {
+    font-family: $font-family-serif;
+    font-size: 1.25rem;
+    margin-bottom: $spacing-xs;
+    color: $color-text;
+}
+
+.cardText {
+    font-family: $font-family-sans;
+    font-size: 0.875rem;
+    color: rgba($color-text, 0.6);
+    line-height: 1.5;
+}

@@ -19,3 +19,5 @@ $spacing-xl: 8rem;
 // Transitions
 $transition-fast: 0.2s ease;
 $transition-normal: 0.3s ease;
+$ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+$ease-out-quart: cubic-bezier(0.165, 0.84, 0.44, 1);
