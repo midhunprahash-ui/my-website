@@ -143,7 +143,7 @@ function App() {
     <main className="site-shell">
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero__frame">
-          <p className="eyebrow">/usr/local/bin/ai-systems-engineer</p>
+          <p className="eyebrow">AI / ML systems portfolio</p>
           <h1 id="hero-title">Midhun Prahash SR</h1>
           <p className="hero__subtitle">
             I build retrieval-heavy AI systems: GraphRAG pipelines, voice AI microservices,
@@ -189,7 +189,7 @@ function App() {
 
       <section className="section-grid" aria-labelledby="experience-title">
         <div className="section-heading">
-          <p className="eyebrow">trace --experience</p>
+          <p className="eyebrow">Experience</p>
           <h2 id="experience-title">Applied AI Work</h2>
         </div>
         <div className="timeline">
@@ -214,7 +214,7 @@ function App() {
 
       <section className="section-grid section-grid--wide" aria-labelledby="projects-title">
         <div className="section-heading">
-          <p className="eyebrow">ls ./projects</p>
+          <p className="eyebrow">Projects</p>
           <h2 id="projects-title">Systems Built</h2>
         </div>
         <div className="project-grid">
@@ -231,7 +231,7 @@ function App() {
 
       <section className="section-grid" aria-labelledby="skills-title">
         <div className="section-heading">
-          <p className="eyebrow">cat technical-skills.json</p>
+          <p className="eyebrow">Technical Skills</p>
           <h2 id="skills-title">Stack Map</h2>
         </div>
         <div className="skill-board">
@@ -250,7 +250,7 @@ function App() {
 
       <section className="research-panel" aria-labelledby="research-title">
         <div>
-          <p className="eyebrow">grep -r "signal" ./research ./wins</p>
+          <p className="eyebrow">Research + Achievements</p>
           <h2 id="research-title">Research, IP, and Wins</h2>
         </div>
         <div className="research-panel__items">
