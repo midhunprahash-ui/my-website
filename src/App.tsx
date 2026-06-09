@@ -1,4 +1,6 @@
+import { Fragment, createElement } from "react";
 import "./App.css";
+import semanticSpikeArticle from "./content/articles/semantic-spike-language-framework.md?raw";
 
 type Experience = {
   id: string;
@@ -172,9 +174,297 @@ const contactLinks = [
   },
 ];
 
+const articles = [
+  {
+    slug: "semantic-spike-language-framework",
+    title: "Direct Semantic Spike Representations for Neuromorphic Language Processing",
+    description:
+      "A research-grade framework for replacing pretrained dense embeddings with emergent spike-based language representations.",
+    date: "2026-06-09",
+    topic: "Neuromorphic NLP",
+    readTime: "Research framework",
+    content: semanticSpikeArticle,
+  },
+];
+
+type MarkdownBlock =
+  | { type: "heading"; level: number; content: string }
+  | { type: "paragraph"; content: string }
+  | { type: "blockquote"; content: string }
+  | { type: "code"; language: string; content: string }
+  | { type: "list"; ordered: boolean; items: string[] }
+  | { type: "table"; rows: string[][] }
+  | { type: "hr" };
+
+type HeadingTag = "h2" | "h3" | "h4" | "h5" | "h6";
+
+function parseMarkdown(markdown: string): MarkdownBlock[] {
+  const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+  const blocks: MarkdownBlock[] = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const line = lines[index];
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      index += 1;
+      continue;
+    }
+
+    if (trimmed.startsWith("```")) {
+      const language = trimmed.slice(3).trim();
+      const codeLines: string[] = [];
+      index += 1;
+
+      while (index < lines.length && !lines[index].trim().startsWith("```")) {
+        codeLines.push(lines[index]);
+        index += 1;
+      }
+
+      blocks.push({
+        type: "code",
+        language,
+        content: codeLines.join("\n"),
+      });
+      index += 1;
+      continue;
+    }
+
+    const heading = /^(#{1,6})\s+(.+)$/.exec(trimmed);
+    if (heading) {
+      blocks.push({
+        type: "heading",
+        level: heading[1].length,
+        content: heading[2],
+      });
+      index += 1;
+      continue;
+    }
+
+    if (/^(-{3,}|\*{3,})$/.test(trimmed)) {
+      blocks.push({ type: "hr" });
+      index += 1;
+      continue;
+    }
+
+    if (trimmed.startsWith(">")) {
+      const quoteLines: string[] = [];
+      while (index < lines.length && lines[index].trim().startsWith(">")) {
+        quoteLines.push(lines[index].trim().replace(/^>\s?/, ""));
+        index += 1;
+      }
+      blocks.push({ type: "blockquote", content: quoteLines.join(" ") });
+      continue;
+    }
+
+    if (isTableStart(lines, index)) {
+      const rows: string[][] = [];
+      while (index < lines.length && lines[index].trim().startsWith("|")) {
+        if (!isTableDivider(lines[index])) {
+          rows.push(parseTableRow(lines[index]));
+        }
+        index += 1;
+      }
+      blocks.push({ type: "table", rows });
+      continue;
+    }
+
+    const unorderedItem = /^[-*]\s+(.+)$/.exec(trimmed);
+    const orderedItem = /^\d+\.\s+(.+)$/.exec(trimmed);
+    if (unorderedItem || orderedItem) {
+      const ordered = Boolean(orderedItem);
+      const items: string[] = [];
+
+      while (index < lines.length) {
+        const item = ordered
+          ? /^\d+\.\s+(.+)$/.exec(lines[index].trim())
+          : /^[-*]\s+(.+)$/.exec(lines[index].trim());
+
+        if (!item) {
+          break;
+        }
+
+        items.push(item[1]);
+        index += 1;
+      }
+
+      blocks.push({ type: "list", ordered, items });
+      continue;
+    }
+
+    const paragraphLines: string[] = [];
+    while (index < lines.length && lines[index].trim()) {
+      const next = lines[index].trim();
+      if (
+        next.startsWith("```") ||
+        next.startsWith("#") ||
+        next.startsWith(">") ||
+        /^(-{3,}|\*{3,})$/.test(next) ||
+        /^[-*]\s+/.test(next) ||
+        /^\d+\.\s+/.test(next) ||
+        isTableStart(lines, index)
+      ) {
+        break;
+      }
+      paragraphLines.push(lines[index]);
+      index += 1;
+    }
+
+    blocks.push({ type: "paragraph", content: paragraphLines.join("\n") });
+  }
+
+  return blocks;
+}
+
+function isTableStart(lines: string[], index: number) {
+  return (
+    lines[index]?.trim().startsWith("|") &&
+    index + 1 < lines.length &&
+    isTableDivider(lines[index + 1])
+  );
+}
+
+function isTableDivider(line: string) {
+  return /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(line.trim());
+}
+
+function parseTableRow(line: string) {
+  return line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+}
+
+function renderInline(content: string) {
+  return content.split(/(\*\*[^*]+\*\*)/g).map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={index}>{part.slice(2, -2)}</strong>;
+    }
+
+    return part.split(/( {2,}\n|\n)/g).map((segment, segmentIndex) =>
+      segment.includes("\n") ? (
+        <br key={`${index}-${segmentIndex}`} />
+      ) : (
+        <Fragment key={`${index}-${segmentIndex}`}>{segment}</Fragment>
+      ),
+    );
+  });
+}
+
+function MarkdownArticle({ markdown }: { markdown: string }) {
+  const blocks = parseMarkdown(markdown);
+
+  return (
+    <div className="article-body">
+      {blocks.map((block, index) => {
+        if (block.type === "heading") {
+          const Heading = `h${Math.min(block.level + 1, 6)}` as HeadingTag;
+          return createElement(Heading, { key: index }, renderInline(block.content));
+        }
+
+        if (block.type === "paragraph") {
+          return <p key={index}>{renderInline(block.content)}</p>;
+        }
+
+        if (block.type === "blockquote") {
+          return <blockquote key={index}>{renderInline(block.content)}</blockquote>;
+        }
+
+        if (block.type === "code") {
+          return (
+            <pre key={index}>
+              <code>{block.content}</code>
+            </pre>
+          );
+        }
+
+        if (block.type === "list") {
+          const List = block.ordered ? "ol" : "ul";
+          return (
+            <List key={index}>
+              {block.items.map((item) => (
+                <li key={item}>{renderInline(item)}</li>
+              ))}
+            </List>
+          );
+        }
+
+        if (block.type === "table") {
+          const [head, ...body] = block.rows;
+          return (
+            <div className="article-table-wrap" key={index}>
+              <table>
+                {head ? (
+                  <thead>
+                    <tr>
+                      {head.map((cell) => (
+                        <th key={cell}>{renderInline(cell)}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                ) : null}
+                <tbody>
+                  {body.map((row, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {row.map((cell, cellIndex) => (
+                        <td key={`${rowIndex}-${cellIndex}`}>{renderInline(cell)}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        }
+
+        return <hr key={index} />;
+      })}
+    </div>
+  );
+}
+
+function SiteNav() {
+  return (
+    <nav className="site-nav" aria-label="Primary navigation">
+      <a href="/">Midhun Prahash SR</a>
+      <div>
+        <a href="/#projects-title">Projects</a>
+        <a href="/articles">Articles</a>
+        <a href="/midhun-prahash-resume-aiml.pdf" target="_blank" rel="noreferrer">
+          Resume
+        </a>
+      </div>
+    </nav>
+  );
+}
+
 function App() {
+  const pathname = window.location.pathname.replace(/\/$/, "") || "/";
+  const articleMatch = /^\/articles\/([^/]+)$/.exec(pathname);
+
+  if (pathname === "/articles") {
+    return <ArticlesPage />;
+  }
+
+  if (articleMatch) {
+    const article = articles.find((item) => item.slug === articleMatch[1]);
+    return article ? <ArticlePage article={article} /> : <NotFoundPage />;
+  }
+
+  if (pathname !== "/") {
+    return <NotFoundPage />;
+  }
+
+  return <HomePage />;
+}
+
+function HomePage() {
   return (
     <main className="site-shell">
+      <SiteNav />
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero__frame">
           <p className="eyebrow">AI / ML systems portfolio</p>
@@ -324,6 +614,76 @@ function App() {
             </p>
           </article>
         </div>
+      </section>
+    </main>
+  );
+}
+
+function ArticlesPage() {
+  return (
+    <main className="site-shell">
+      <SiteNav />
+      <section className="articles-hero" aria-labelledby="articles-title">
+        <p className="eyebrow">Articles</p>
+        <h1 id="articles-title">Research Notes and Technical Essays</h1>
+        <p>
+          Long-form writing on AI systems, retrieval, neuromorphic language
+          processing, and engineering ideas worth making concrete.
+        </p>
+      </section>
+
+      <section className="article-list" aria-label="Published articles">
+        {articles.map((article) => (
+          <a
+            className="article-card"
+            href={`/articles/${article.slug}`}
+            key={article.slug}
+          >
+            <span>{article.topic}</span>
+            <h2>{article.title}</h2>
+            <p>{article.description}</p>
+            <time dateTime={article.date}>{article.date}</time>
+          </a>
+        ))}
+      </section>
+    </main>
+  );
+}
+
+function ArticlePage({ article }: { article: (typeof articles)[number] }) {
+  return (
+    <main className="site-shell">
+      <SiteNav />
+      <article className="article-page">
+        <header className="article-header">
+          <a className="article-back" href="/articles">
+            Articles
+          </a>
+          <p className="eyebrow">{article.topic}</p>
+          <h1>{article.title}</h1>
+          <p>{article.description}</p>
+          <div className="article-meta">
+            <time dateTime={article.date}>{article.date}</time>
+            <span>{article.readTime}</span>
+          </div>
+        </header>
+        <MarkdownArticle markdown={article.content} />
+      </article>
+    </main>
+  );
+}
+
+function NotFoundPage() {
+  return (
+    <main className="site-shell">
+      <SiteNav />
+      <section className="articles-hero" aria-labelledby="not-found-title">
+        <p className="eyebrow">404</p>
+        <h1 id="not-found-title">Page not found</h1>
+        <p>The page you requested does not exist.</p>
+        <a className="button button--solid" href="/">
+          Back home
+        </a>
       </section>
     </main>
   );
