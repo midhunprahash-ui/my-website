@@ -1,6 +1,45 @@
-import { Fragment, createElement } from "react";
+import {
+  Fragment,
+  createElement,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import "./App.css";
 import semanticSpikeArticle from "./content/articles/semantic-spike-language-framework.md?raw";
+
+type Theme = "light" | "dark";
+
+const THEME_STORAGE_KEY = "portfolio-theme";
+
+function isTheme(value: string | null): value is Theme {
+  return value === "light" || value === "dark";
+}
+
+function getSystemTheme(): Theme {
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
+function getInitialTheme(): Theme {
+  try {
+    const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    if (isTheme(storedTheme)) {
+      return storedTheme;
+    }
+  } catch {
+    return getSystemTheme();
+  }
+
+  return getSystemTheme();
+}
+
+function storeTheme(theme: Theme) {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // Storage can be unavailable in private browsing or restricted contexts.
+  }
+}
 
 type Experience = {
   id: string;
@@ -172,6 +211,27 @@ const contactLinks = [
     label: "Email",
     href: "mailto:midhuntech2023@gmail.com",
   },
+];
+
+const profileHighlights = [
+  {
+    label: "Degree",
+    value: "B.Tech AI + Data Science",
+  },
+  {
+    label: "CGPA",
+    value: "8.4 / 10",
+  },
+  {
+    label: "Expected",
+    value: "2027",
+  },
+];
+
+const commandItems = [
+  "Design grounded RAG systems",
+  "Ship voice AI microservices",
+  "Tune hybrid retrieval pipelines",
 ];
 
 const articles = [
@@ -426,7 +486,43 @@ function MarkdownArticle({ markdown }: { markdown: string }) {
   );
 }
 
-function SiteNav() {
+type SiteNavProps = {
+  theme: Theme;
+  onThemeToggle: () => void;
+};
+
+type PageProps = SiteNavProps;
+
+function LiquidBackdrop() {
+  return (
+    <div className="liquid-backdrop" aria-hidden="true">
+      <span className="liquid-blob liquid-blob--one" />
+      <span className="liquid-blob liquid-blob--two" />
+      <span className="liquid-blob liquid-blob--three" />
+      <span className="liquid-sheen" />
+    </div>
+  );
+}
+
+function PageShell({
+  children,
+  theme,
+  onThemeToggle,
+}: {
+  children: ReactNode;
+} & SiteNavProps) {
+  return (
+    <main className="site-shell">
+      <LiquidBackdrop />
+      <SiteNav theme={theme} onThemeToggle={onThemeToggle} />
+      {children}
+    </main>
+  );
+}
+
+function SiteNav({ theme, onThemeToggle }: SiteNavProps) {
+  const nextTheme = theme === "dark" ? "light" : "dark";
+
   return (
     <nav className="site-nav" aria-label="Primary navigation">
       <a href="/">Midhun Prahash SR</a>
@@ -436,35 +532,69 @@ function SiteNav() {
         <a href="/midhun-prahash-resume-aiml.pdf" target="_blank" rel="noreferrer">
           Resume
         </a>
+        <button
+          className="theme-toggle"
+          type="button"
+          aria-label={`Switch to ${nextTheme} theme`}
+          aria-pressed={theme === "dark"}
+          onClick={onThemeToggle}
+        >
+          <span className="theme-toggle__track" aria-hidden="true">
+            <span className="theme-toggle__thumb" />
+          </span>
+          <span>{theme}</span>
+        </button>
       </div>
     </nav>
   );
 }
 
 function App() {
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const pathname = window.location.pathname.replace(/\/$/, "") || "/";
   const articleMatch = /^\/articles\/([^/]+)$/.exec(pathname);
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  }, [theme]);
+
+  function handleThemeToggle() {
+    setTheme((currentTheme) => {
+      const nextTheme = currentTheme === "dark" ? "light" : "dark";
+      storeTheme(nextTheme);
+      return nextTheme;
+    });
+  }
+
+  const pageProps = {
+    theme,
+    onThemeToggle: handleThemeToggle,
+  };
+
   if (pathname === "/articles") {
-    return <ArticlesPage />;
+    return <ArticlesPage {...pageProps} />;
   }
 
   if (articleMatch) {
     const article = articles.find((item) => item.slug === articleMatch[1]);
-    return article ? <ArticlePage article={article} /> : <NotFoundPage />;
+    return article ? (
+      <ArticlePage article={article} {...pageProps} />
+    ) : (
+      <NotFoundPage {...pageProps} />
+    );
   }
 
   if (pathname !== "/") {
-    return <NotFoundPage />;
+    return <NotFoundPage {...pageProps} />;
   }
 
-  return <HomePage />;
+  return <HomePage {...pageProps} />;
 }
 
-function HomePage() {
+function HomePage({ theme, onThemeToggle }: PageProps) {
   return (
-    <main className="site-shell">
-      <SiteNav />
+    <PageShell theme={theme} onThemeToggle={onThemeToggle}>
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero__frame">
           <p className="eyebrow">AI / ML systems portfolio</p>
@@ -498,22 +628,32 @@ function HomePage() {
           </div>
         </div>
 
-        <aside className="terminal-panel" aria-label="Profile snapshot">
-          <div className="terminal-panel__bar">
-            <span />
-            <span />
-            <span />
+        <aside className="command-panel" aria-label="Profile snapshot">
+          <div className="command-panel__search">
+            <span>AI</span>
+            <p>Profile snapshot</p>
+            <kbd>RAG</kbd>
           </div>
-          <pre>{`profile.load({
-  degree: "B.Tech AI + Data Science",
-  cgpa: "8.4/10",
-  status: "Expected 2027",
-  current_focus: [
-    "RAG systems",
-    "LLM orchestration",
-    "knowledge graphs"
-  ]
-})`}</pre>
+
+          <div className="command-panel__metrics">
+            {profileHighlights.map((item) => (
+              <div key={item.label}>
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+              </div>
+            ))}
+          </div>
+
+          <div className="command-panel__list">
+            {commandItems.map((item) => (
+              <p key={item}>{item}</p>
+            ))}
+          </div>
+
+          <div className="command-panel__footer">
+            <span>Current focus</span>
+            <strong>Knowledge graphs + LLM orchestration</strong>
+          </div>
         </aside>
       </section>
 
@@ -615,14 +755,13 @@ function HomePage() {
           </article>
         </div>
       </section>
-    </main>
+    </PageShell>
   );
 }
 
-function ArticlesPage() {
+function ArticlesPage({ theme, onThemeToggle }: PageProps) {
   return (
-    <main className="site-shell">
-      <SiteNav />
+    <PageShell theme={theme} onThemeToggle={onThemeToggle}>
       <section className="articles-hero" aria-labelledby="articles-title">
         <p className="eyebrow">Articles</p>
         <h1 id="articles-title">Research Notes and Technical Essays</h1>
@@ -646,14 +785,19 @@ function ArticlesPage() {
           </a>
         ))}
       </section>
-    </main>
+    </PageShell>
   );
 }
 
-function ArticlePage({ article }: { article: (typeof articles)[number] }) {
+function ArticlePage({
+  article,
+  theme,
+  onThemeToggle,
+}: {
+  article: (typeof articles)[number];
+} & PageProps) {
   return (
-    <main className="site-shell">
-      <SiteNav />
+    <PageShell theme={theme} onThemeToggle={onThemeToggle}>
       <article className="article-page">
         <header className="article-header">
           <a className="article-back" href="/articles">
@@ -669,14 +813,13 @@ function ArticlePage({ article }: { article: (typeof articles)[number] }) {
         </header>
         <MarkdownArticle markdown={article.content} />
       </article>
-    </main>
+    </PageShell>
   );
 }
 
-function NotFoundPage() {
+function NotFoundPage({ theme, onThemeToggle }: PageProps) {
   return (
-    <main className="site-shell">
-      <SiteNav />
+    <PageShell theme={theme} onThemeToggle={onThemeToggle}>
       <section className="articles-hero" aria-labelledby="not-found-title">
         <p className="eyebrow">404</p>
         <h1 id="not-found-title">Page not found</h1>
@@ -685,7 +828,7 @@ function NotFoundPage() {
           Back home
         </a>
       </section>
-    </main>
+    </PageShell>
   );
 }
 
