@@ -1,12 +1,17 @@
 import {
-  Fragment,
-  createElement,
+  lazy,
+  Suspense,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import "./App.css";
 import semanticSpikeArticle from "./content/articles/semantic-spike-language-framework.md?raw";
+
+const MarkdownArticle = lazy(() => import("./components/MarkdownArticle"));
+
+const publicationAuthors = "Midhun Prahash SR, Rhea Alphonsa Jose, and Sam. V. George";
 
 type Theme = "light" | "dark";
 
@@ -55,6 +60,7 @@ type Project = {
   type: string;
   stack: string;
   description: string;
+  href?: string;
 };
 
 type SkillGroup = {
@@ -63,23 +69,13 @@ type SkillGroup = {
   skills: string[];
 };
 
-const signals = [
-  "GraphRAG",
-  "Hybrid Retrieval",
-  "Voice AI",
-  "Vector Search",
-  "FastAPI",
-  "Supabase",
-  "Neo4j",
-];
-
 const experiences: Experience[] = [
   {
     id: "IIITK",
-    company: "Indian Institute of Information Technology, Kottayam",
-    role: "Machine Learning Intern",
-    period: "Currently Working",
-    bullets: ["Coming Soon"],
+    company: "MINDS Research Lab, IIIT Kottayam",
+    role: "Research Intern",
+    period: "Jun 2026 - Present",
+    bullets: ["Researching encoder-based transformers for detecting hidden suicidal intent in social media text, integrating sequential modeling and psycholinguistic features."],
   },
   {
     id: "cospin",
@@ -113,7 +109,14 @@ const experiences: Experience[] = [
   },
 ];
 
-const projects: Project[] = [
+const earlierProjects: Project[] = [
+  {
+    id: "hairline-ai",
+    name: "Hairline AI",
+    type: "Computer vision",
+    stack: "YOLOv8 / MediaPipe / OpenCV / SQL",
+    description: "Facial analysis combining segmentation and landmark detection to measure and store facial proportions.",
+  },
   {
     id: "studentai",
     name: "StudentAI",
@@ -152,7 +155,7 @@ const skillGroups: SkillGroup[] = [
   {
     id: "languages",
     label: "Languages",
-    skills: ["Python", "Java", "SQL"],
+    skills: ["Python", "SQL", "Java"],
   },
   {
     id: "ml",
@@ -164,6 +167,9 @@ const skillGroups: SkillGroup[] = [
       "Threshold Tuning",
       "Scikit-learn",
       "PyTorch",
+      "Computer Vision",
+      "Transformers",
+      "BERT",
     ],
   },
   {
@@ -178,6 +184,8 @@ const skillGroups: SkillGroup[] = [
       "Reranking",
       "OpenAI API",
       "Google Gemini",
+      "Prompt Engineering",
+      "ASR / TTS",
     ],
   },
   {
@@ -205,33 +213,55 @@ const contactLinks = [
   },
   {
     label: "LinkedIn",
-    href: "https://www.linkedin.com/in/midhunprahash",
+    href: "https://www.linkedin.com/in/midhunprahash/",
+  },
+  {
+    label: "Google Scholar",
+    href: "https://scholar.google.com/citations?user=Gg4KbxIAAAAJ&hl=en",
   },
   {
     label: "Email",
-    href: "mailto:midhuntech2023@gmail.com",
+    href: "mailto:midhunprahashh@gmail.com",
   },
 ];
 
-const profileHighlights = [
+const projects: Project[] = [
   {
-    label: "Degree",
-    value: "B.Tech AI + Data Science",
+    id: "paperflow", name: "Paperflow", type: "Document intelligence",
+    stack: "TypeScript / Python / Azure / Supabase",
+    description: "A research reader that turns PDFs into navigable sections, tables, and figures while keeping the original source close at hand.",
+    href: "https://github.com/midhunprahash-ui/paperflow",
   },
   {
-    label: "CGPA",
-    value: "8.4 / 10",
+    id: "cypher", name: "CYPHER", type: "Applied machine learning",
+    stack: "Python / FastAPI / LightGBM / React",
+    description: "Fraud-risk scoring from transaction and identity signals, with model comparisons and explanations in an analyst-facing interface.",
+    href: "https://github.com/midhunprahash-ui/credit-card-fraud-detection",
   },
   {
-    label: "Expected",
-    value: "2027",
+    id: "studentai", name: "StudentAI", type: "AI for education",
+    stack: "Python / FAISS / Sentence Transformers / Gemini",
+    description: "An OCR-to-vector learning assistant that turns educational texts into evidence-backed explanations and targeted assessments.",
+    href: "https://github.com/midhunprahash-ui/student.ai",
   },
-];
-
-const commandItems = [
-  "Design grounded RAG systems",
-  "Ship voice AI microservices",
-  "Tune hybrid retrieval pipelines",
+  {
+    id: "uniguide", name: "UniChat", type: "Retrieval systems",
+    stack: "FastAPI / pgvector / LlamaIndex / Supabase",
+    description: "A multi-tenant institutional knowledge assistant with semantic caching, row-level security, and streamed, citation-grounded answers.",
+    href: "https://github.com/midhunprahash-ui/unichat-backend",
+  },
+  {
+    id: "proof-shield", name: "Proof Shield", type: "Evidence workflows",
+    stack: "OCR / Document verification / AI drafting",
+    description: "A chargeback assistant that checks payment and delivery evidence, drafts cited responses, and keeps human approval in the process.",
+    href: "https://github.com/midhunprahash-ui/proof-shield",
+  },
+  {
+    id: "indic-tts", name: "Indic TTS", type: "Speech systems",
+    stack: "Python / Speech synthesis / Model evaluation",
+    description: "A comparison workspace for Tamil, English, and Tanglish speech models, with side-by-side playback and latency tracking.",
+    href: "https://github.com/midhunprahash-ui/indic-tts",
+  },
 ];
 
 const articles = [
@@ -239,7 +269,7 @@ const articles = [
     slug: "semantic-spike-language-framework",
     title: "Direct Semantic Spike Representations for Neuromorphic Language Processing",
     description:
-      "A research-grade framework for replacing pretrained dense embeddings with emergent spike-based language representations.",
+      "A research framework for replacing pretrained dense embeddings with emergent spike-based language representations.",
     date: "2026-06-09",
     topic: "Neuromorphic NLP",
     readTime: "Research framework",
@@ -247,262 +277,12 @@ const articles = [
   },
 ];
 
-type MarkdownBlock =
-  | { type: "heading"; level: number; content: string }
-  | { type: "paragraph"; content: string }
-  | { type: "blockquote"; content: string }
-  | { type: "code"; language: string; content: string }
-  | { type: "list"; ordered: boolean; items: string[] }
-  | { type: "table"; rows: string[][] }
-  | { type: "hr" };
-
-type HeadingTag = "h2" | "h3" | "h4" | "h5" | "h6";
-
-function parseMarkdown(markdown: string): MarkdownBlock[] {
-  const lines = markdown.replace(/\r\n/g, "\n").split("\n");
-  const blocks: MarkdownBlock[] = [];
-  let index = 0;
-
-  while (index < lines.length) {
-    const line = lines[index];
-    const trimmed = line.trim();
-
-    if (!trimmed) {
-      index += 1;
-      continue;
-    }
-
-    if (trimmed.startsWith("```")) {
-      const language = trimmed.slice(3).trim();
-      const codeLines: string[] = [];
-      index += 1;
-
-      while (index < lines.length && !lines[index].trim().startsWith("```")) {
-        codeLines.push(lines[index]);
-        index += 1;
-      }
-
-      blocks.push({
-        type: "code",
-        language,
-        content: codeLines.join("\n"),
-      });
-      index += 1;
-      continue;
-    }
-
-    const heading = /^(#{1,6})\s+(.+)$/.exec(trimmed);
-    if (heading) {
-      blocks.push({
-        type: "heading",
-        level: heading[1].length,
-        content: heading[2],
-      });
-      index += 1;
-      continue;
-    }
-
-    if (/^(-{3,}|\*{3,})$/.test(trimmed)) {
-      blocks.push({ type: "hr" });
-      index += 1;
-      continue;
-    }
-
-    if (trimmed.startsWith(">")) {
-      const quoteLines: string[] = [];
-      while (index < lines.length && lines[index].trim().startsWith(">")) {
-        quoteLines.push(lines[index].trim().replace(/^>\s?/, ""));
-        index += 1;
-      }
-      blocks.push({ type: "blockquote", content: quoteLines.join(" ") });
-      continue;
-    }
-
-    if (isTableStart(lines, index)) {
-      const rows: string[][] = [];
-      while (index < lines.length && lines[index].trim().startsWith("|")) {
-        if (!isTableDivider(lines[index])) {
-          rows.push(parseTableRow(lines[index]));
-        }
-        index += 1;
-      }
-      blocks.push({ type: "table", rows });
-      continue;
-    }
-
-    const unorderedItem = /^[-*]\s+(.+)$/.exec(trimmed);
-    const orderedItem = /^\d+\.\s+(.+)$/.exec(trimmed);
-    if (unorderedItem || orderedItem) {
-      const ordered = Boolean(orderedItem);
-      const items: string[] = [];
-
-      while (index < lines.length) {
-        const item = ordered
-          ? /^\d+\.\s+(.+)$/.exec(lines[index].trim())
-          : /^[-*]\s+(.+)$/.exec(lines[index].trim());
-
-        if (!item) {
-          break;
-        }
-
-        items.push(item[1]);
-        index += 1;
-      }
-
-      blocks.push({ type: "list", ordered, items });
-      continue;
-    }
-
-    const paragraphLines: string[] = [];
-    while (index < lines.length && lines[index].trim()) {
-      const next = lines[index].trim();
-      if (
-        next.startsWith("```") ||
-        next.startsWith("#") ||
-        next.startsWith(">") ||
-        /^(-{3,}|\*{3,})$/.test(next) ||
-        /^[-*]\s+/.test(next) ||
-        /^\d+\.\s+/.test(next) ||
-        isTableStart(lines, index)
-      ) {
-        break;
-      }
-      paragraphLines.push(lines[index]);
-      index += 1;
-    }
-
-    blocks.push({ type: "paragraph", content: paragraphLines.join("\n") });
-  }
-
-  return blocks;
-}
-
-function isTableStart(lines: string[], index: number) {
-  return (
-    lines[index]?.trim().startsWith("|") &&
-    index + 1 < lines.length &&
-    isTableDivider(lines[index + 1])
-  );
-}
-
-function isTableDivider(line: string) {
-  return /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(line.trim());
-}
-
-function parseTableRow(line: string) {
-  return line
-    .trim()
-    .replace(/^\|/, "")
-    .replace(/\|$/, "")
-    .split("|")
-    .map((cell) => cell.trim());
-}
-
-function renderInline(content: string) {
-  return content.split(/(\*\*[^*]+\*\*)/g).map((part, index) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={index}>{part.slice(2, -2)}</strong>;
-    }
-
-    return part.split(/( {2,}\n|\n)/g).map((segment, segmentIndex) =>
-      segment.includes("\n") ? (
-        <br key={`${index}-${segmentIndex}`} />
-      ) : (
-        <Fragment key={`${index}-${segmentIndex}`}>{segment}</Fragment>
-      ),
-    );
-  });
-}
-
-function MarkdownArticle({ markdown }: { markdown: string }) {
-  const blocks = parseMarkdown(markdown);
-
-  return (
-    <div className="article-body">
-      {blocks.map((block, index) => {
-        if (block.type === "heading") {
-          const Heading = `h${Math.min(block.level + 1, 6)}` as HeadingTag;
-          return createElement(Heading, { key: index }, renderInline(block.content));
-        }
-
-        if (block.type === "paragraph") {
-          return <p key={index}>{renderInline(block.content)}</p>;
-        }
-
-        if (block.type === "blockquote") {
-          return <blockquote key={index}>{renderInline(block.content)}</blockquote>;
-        }
-
-        if (block.type === "code") {
-          return (
-            <pre key={index}>
-              <code>{block.content}</code>
-            </pre>
-          );
-        }
-
-        if (block.type === "list") {
-          const List = block.ordered ? "ol" : "ul";
-          return (
-            <List key={index}>
-              {block.items.map((item) => (
-                <li key={item}>{renderInline(item)}</li>
-              ))}
-            </List>
-          );
-        }
-
-        if (block.type === "table") {
-          const [head, ...body] = block.rows;
-          return (
-            <div className="article-table-wrap" key={index}>
-              <table>
-                {head ? (
-                  <thead>
-                    <tr>
-                      {head.map((cell) => (
-                        <th key={cell}>{renderInline(cell)}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                ) : null}
-                <tbody>
-                  {body.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {row.map((cell, cellIndex) => (
-                        <td key={`${rowIndex}-${cellIndex}`}>{renderInline(cell)}</td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          );
-        }
-
-        return <hr key={index} />;
-      })}
-    </div>
-  );
-}
-
 type SiteNavProps = {
   theme: Theme;
   onThemeToggle: () => void;
 };
 
 type PageProps = SiteNavProps;
-
-function LiquidBackdrop() {
-  return (
-    <div className="liquid-backdrop" aria-hidden="true">
-      <span className="liquid-blob liquid-blob--one" />
-      <span className="liquid-blob liquid-blob--two" />
-      <span className="liquid-blob liquid-blob--three" />
-      <span className="liquid-sheen" />
-    </div>
-  );
-}
 
 function PageShell({
   children,
@@ -512,39 +292,51 @@ function PageShell({
   children: ReactNode;
 } & SiteNavProps) {
   return (
-    <main className="site-shell">
-      <LiquidBackdrop />
+    <div className="site-shell">
+      <a className="skip-link" href="#main-content">Skip to content</a>
       <SiteNav theme={theme} onThemeToggle={onThemeToggle} />
-      {children}
-    </main>
+      <main id="main-content">{children}</main>
+      <footer className="site-footer">
+        <a className="footer-name" href="/">Midhun Prahash SR</a>
+        <p>AI, language, and useful systems.</p>
+        <a href="https://github.com/midhunprahash-ui" target="_blank" rel="noreferrer">GitHub</a>
+      </footer>
+    </div>
   );
 }
 
+const navigationItems = [
+  { label: "Projects", href: "/projects" },
+  { label: "Publications", href: "/publications" },
+  { label: "Patents", href: "/patents" },
+  { label: "Articles", href: "/articles" },
+];
+
 function SiteNav({ theme, onThemeToggle }: SiteNavProps) {
   const nextTheme = theme === "dark" ? "light" : "dark";
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const currentPath = window.location.pathname.replace(/\/$/, "") || "/";
+
+  function navLinks() {
+    return <>
+      {navigationItems.map(item => <a key={item.href} href={item.href} aria-current={currentPath === item.href || currentPath.startsWith(`${item.href}/`) ? "page" : undefined}>{item.label}</a>)}
+      <a href="/midhun-prahash-resume-aiml.pdf" target="_blank" rel="noreferrer">Resume</a>
+    </>;
+  }
 
   return (
-    <nav className="site-nav" aria-label="Primary navigation">
-      <a href="/">Midhun Prahash SR</a>
-      <div>
-        <a href="/#projects-title">Projects</a>
-        <a href="/articles">Articles</a>
-        <a href="/midhun-prahash-resume-aiml.pdf" target="_blank" rel="noreferrer">
-          Resume
-        </a>
-        <button
-          className="theme-toggle"
-          type="button"
-          aria-label={`Switch to ${nextTheme} theme`}
-          aria-pressed={theme === "dark"}
-          onClick={onThemeToggle}
-        >
-          <span className="theme-toggle__track" aria-hidden="true">
-            <span className="theme-toggle__thumb" />
-          </span>
+    <nav className="site-nav" aria-label="Primary navigation" onKeyDown={event => { if (event.key === "Escape" && menuOpen) { setMenuOpen(false); menuButtonRef.current?.focus(); } }}>
+      <a className="brand" href="/">Midhun Prahash SR<span aria-hidden="true">.</span></a>
+      <div className="desktop-links">{navLinks()}</div>
+      <div className="nav-controls">
+        <button className="theme-toggle" type="button" aria-label={`Switch to ${nextTheme} theme`} aria-pressed={theme === "dark"} onClick={onThemeToggle}>
+          <span className="theme-toggle__symbol" aria-hidden="true">{theme === "dark" ? "◐" : "◑"}</span>
           <span>{theme}</span>
         </button>
+        <button ref={menuButtonRef} className="menu-toggle" type="button" aria-expanded={menuOpen} aria-controls="mobile-navigation" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "Close" : "Menu"}</button>
       </div>
+      {menuOpen && <div className="mobile-links" id="mobile-navigation">{navLinks()}</div>}
     </nav>
   );
 }
@@ -559,6 +351,24 @@ function App() {
     document.documentElement.style.colorScheme = theme;
   }, [theme]);
 
+  useEffect(() => {
+    const article = articles.find(item => pathname === `/articles/${item.slug}`);
+    const title = article ? `${article.title} | Midhun Prahash SR`
+      : navigationItems.some(item => item.href === pathname) ? `${navigationItems.find(item => item.href === pathname)?.label} | Midhun Prahash SR`
+      : pathname === "/" ? "Midhun Prahash SR | AI/ML Portfolio"
+      : "Page not found | Midhun Prahash SR";
+    const descriptions: Record<string, string> = {
+      "/projects": "AI and machine learning projects by Midhun Prahash SR, including Paperflow, CYPHER, UniChat, StudentAI, Proof Shield, and Indic TTS.",
+      "/publications": "Publications by Midhun Prahash SR on transformer-based language understanding and psycholinguistic modeling, with IEEE Xplore and Google Scholar links.",
+      "/patents": "Patent application by Midhun Prahash SR for personalized, inclusive, and adaptive learning support using agentic strategies.",
+      "/articles": "Research notes on AI, retrieval systems, and neuromorphic language processing by Midhun Prahash SR.",
+    };
+    const description = article?.description ?? descriptions[pathname]
+      ?? "AI engineering portfolio of Midhun Prahash SR: retrieval systems, voice AI, applied machine learning, and research.";
+    document.title = title;
+    document.querySelector('meta[name="description"]')?.setAttribute("content", description);
+  }, [pathname]);
+
   function handleThemeToggle() {
     setTheme((currentTheme) => {
       const nextTheme = currentTheme === "dark" ? "light" : "dark";
@@ -571,6 +381,10 @@ function App() {
     theme,
     onThemeToggle: handleThemeToggle,
   };
+
+  if (pathname === "/projects") return <ProjectsPage {...pageProps} />;
+  if (pathname === "/publications") return <PublicationsPage {...pageProps} />;
+  if (pathname === "/patents") return <PatentsPage {...pageProps} />;
 
   if (pathname === "/articles") {
     return <ArticlesPage {...pageProps} />;
@@ -596,167 +410,154 @@ function HomePage({ theme, onThemeToggle }: PageProps) {
   return (
     <PageShell theme={theme} onThemeToggle={onThemeToggle}>
       <section className="hero" aria-labelledby="hero-title">
-        <div className="hero__frame">
-          <p className="eyebrow">AI / ML systems portfolio</p>
-          <h1 id="hero-title">Midhun Prahash SR</h1>
-          <p className="hero__subtitle">
-            I build retrieval-heavy AI systems: GraphRAG pipelines, voice AI
-            microservices, vector databases, and grounded LLM workflows that
-            survive real data.
-          </p>
-
-          <div className="hero__actions" aria-label="Primary links">
-            <a
-              className="button button--solid"
-              href="/midhun-prahash-resume-aiml.pdf"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Resume.pdf
-            </a>
-            {contactLinks.map((link) => (
-              <a
-                key={link.label}
-                className="button"
-                href={link.href}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {link.label}
-              </a>
-            ))}
+        <div className="hero__copy">
+          <p className="eyebrow">AI / ML Engineer</p>
+          <h1 id="hero-title">Midhun<br />Prahash SR<span>.</span></h1>
+          <p className="hero__subtitle">I build AI systems that connect language, knowledge, and real-world problems.</p>
+          <div className="hero__actions">
+            <a className="button button--solid" href="/projects">Explore projects</a>
+            <a className="text-link" href="/midhun-prahash-resume-aiml.pdf" target="_blank" rel="noreferrer">View résumé</a>
           </div>
         </div>
-
-        <aside className="command-panel" aria-label="Profile snapshot">
-          <div className="command-panel__search">
-            <span>AI</span>
-            <p>Profile snapshot</p>
-            <kbd>RAG</kbd>
-          </div>
-
-          <div className="command-panel__metrics">
-            {profileHighlights.map((item) => (
-              <div key={item.label}>
-                <span>{item.label}</span>
-                <strong>{item.value}</strong>
-              </div>
-            ))}
-          </div>
-
-          <div className="command-panel__list">
-            {commandItems.map((item) => (
-              <p key={item}>{item}</p>
-            ))}
-          </div>
-
-          <div className="command-panel__footer">
-            <span>Current focus</span>
-            <strong>Knowledge graphs + LLM orchestration</strong>
-          </div>
-        </aside>
-      </section>
-
-      <section className="signal-strip" aria-label="Technical signals">
-        {signals.map((signal) => (
-          <span key={signal}>{signal}</span>
-        ))}
-      </section>
-
-      <section className="section-grid" aria-labelledby="experience-title">
-        <div className="section-heading">
-          <p className="eyebrow">Experience</p>
-          <h2 id="experience-title">Applied AI Work</h2>
-        </div>
-        <div className="timeline">
-          {experiences.map((experience) => (
-            <article className="timeline-card" key={experience.id}>
-              <div className="timeline-card__meta">
-                <span>{experience.period}</span>
-                <strong>{experience.company}</strong>
-              </div>
-              <div>
-                <h3>{experience.role}</h3>
-                <ul>
-                  {experience.bullets.map((bullet) => (
-                    <li key={bullet}>{bullet}</li>
-                  ))}
-                </ul>
-              </div>
-            </article>
-          ))}
+        <div className="hero__visual">
+          <img src="/midhun-prahash.jpg" alt="Midhun Prahash SR" width="978" height="1000" fetchPriority="high" />
         </div>
       </section>
 
-      <section
-        className="section-grid section-grid--wide"
-        aria-labelledby="projects-title"
-      >
-        <div className="section-heading">
-          <p className="eyebrow">Projects</p>
-          <h2 id="projects-title">Systems Built</h2>
-        </div>
-        <div className="project-grid">
-          {projects.map((project) => (
-            <article className="project-card" key={project.id}>
-              <p>{project.type}</p>
-              <h3>{project.name}</h3>
-              <span>{project.stack}</span>
-              <p>{project.description}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="section-grid" aria-labelledby="skills-title">
-        <div className="section-heading">
-          <p className="eyebrow">Technical Skills</p>
-          <h2 id="skills-title">Stack Map</h2>
-        </div>
-        <div className="skill-board">
-          {skillGroups.map((group) => (
-            <article className="skill-group" key={group.id}>
-              <h3>{group.label}</h3>
-              <div>
-                {group.skills.map((skill) => (
-                  <span key={skill}>{skill}</span>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="research-panel" aria-labelledby="research-title">
+      <section className="intro" aria-labelledby="about-title">
+        <h2 id="about-title">From an idea<br />to a working system.</h2>
         <div>
-          <p className="eyebrow">Research + Achievements</p>
-          <h2 id="research-title">Research, IP, and Wins</h2>
+          <p>I work across retrieval-augmented generation, knowledge graphs, and voice AI. My interests extend to LLM evaluation, mechanistic interpretability, and neuromorphic language processing.</p>
+          <dl className="education">
+            <div><dt>Education</dt><dd>B.Tech AI + Data Science<span className="education-school">St. Joseph’s Institute of Technology</span></dd></div>
+            <div><dt>CGPA</dt><dd>8.4 / 10</dd></div>
+            <div><dt>Expected graduation</dt><dd>2027</dd></div>
+          </dl>
         </div>
-        <div className="research-panel__items">
-          <article>
-            <span>IEEE 2026</span>
-            <p>
-              Enhancing Transformer-Based Hidden Suicidal Intention Detection
-              with Sequential Modeling and Psycholinguistic Feature Fusion.
-            </p>
-          </article>
-          <article>
-            <span>Patent</span>
-            <p>
-              Intelligent agent for personalized and inclusive learning support
-              systems for adaptive learning with agentic strategies.
-            </p>
-          </article>
-          <article>
-            <span>Top 2 / 800+</span>
-            <p>
-              Runner-up at the 2025 Thoothukudi District Police Cyber Hackathon.
-            </p>
-          </article>
+      </section>
+
+      <section className="projects-section" aria-labelledby="projects-title">
+        <div className="section-heading"><h2 id="projects-title">Selected projects</h2></div>
+        <ProjectGrid items={projects.slice(0, 2)} />
+        <a className="text-link section-link" href="/projects">Explore all projects</a>
+      </section>
+
+      <section className="experience-section" aria-labelledby="experience-title">
+        <div className="section-heading"><h2 id="experience-title">Applied AI work</h2></div>
+        <div className="timeline">
+          {experiences.map(experience => (
+            <article className="timeline-card" key={experience.id}>
+              <div className="timeline-card__meta"><span>{experience.period}</span></div>
+              <div className="timeline-card__content">
+                <h3>{experience.company}</h3><p className="experience-role">{experience.role}</p>
+                {experience.bullets.length > 0 && <ul>{experience.bullets.map(bullet => <li key={bullet}>{bullet}</li>)}</ul>}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="research-section" aria-labelledby="research-title">
+        <div className="section-heading"><h2 id="research-title">Research & recognition</h2></div>
+        <div className="research-layout">
+          <a className="research-feature" href={`/articles/${articles[0].slug}`}>
+            <img className="research-art" src="/knowledge-graph.jpg" alt="" width="1000" height="1000" loading="lazy" />
+            <span className="eyebrow">Neuromorphic NLP</span>
+            <h3>Can language be represented in spikes?</h3>
+            <p>{articles[0].description}</p>
+            <span className="research-link">Read the research framework</span>
+          </a>
+          <div className="research-panel__items">
+            <article><span>IEEE ICITIIT 2026</span><h3 className="publication-title"><a href="/publications">Enhancing Transformer-Based Hidden Suicidal Intention Detection with Sequential Modeling and Psycholinguistic Feature Fusion.</a></h3><p className="publication-authors">{publicationAuthors}</p><a className="publication-source" href="/publications">View publications</a></article>
+            <article><span>Patent application · 202541076262</span><p>Intelligent Agent for Personalized &amp; Inclusive Learning Support System for Adaptive Learning with Agentic Strategies.</p><a className="publication-source" href="/patents">View patent application</a></article>
+            <article><span>Hackathon runner-up</span><p>Top 2 of 800+ teams at the 2025 Thoothukudi District Police Cyber Hackathon, building a crime prediction system with ARIMA and Random Forest.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section className="skills-section" aria-labelledby="skills-title">
+        <div className="section-heading"><h2 id="skills-title">Tools I build with</h2></div>
+        <div className="skill-board">
+          {skillGroups.map(group => <article className="skill-group" key={group.id}><h3>{group.label}</h3><p>{group.skills.join(" · ")}</p></article>)}
+        </div>
+      </section>
+
+      <section className="contact-section" aria-labelledby="contact-title">
+        <h2 id="contact-title">Have a problem<br />worth solving?</h2>
+        <div><p>Let’s talk about AI engineering, research, or building something useful together.</p>
+          <a className="contact-email" href="mailto:midhunprahashh@gmail.com">midhunprahashh@gmail.com</a>
+          <div className="contact-links">{contactLinks.filter(link => link.label !== "Email").map(link => <a href={link.href} key={link.label} target="_blank" rel="noreferrer">{link.label}</a>)}</div>
         </div>
       </section>
     </PageShell>
   );
+}
+
+function ProjectGrid({ items }: { items: Project[] }) {
+  return <div className="project-grid">
+    {items.map((project, index) => <article className="project-card" key={project.id}>
+      <div className="project-card__meta"><span>{project.type}</span><span className="project-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span></div>
+      <h3><a href={project.href} target="_blank" rel="noreferrer">{project.name}</a></h3>
+      <p>{project.description}</p>
+      <div className="project-card__footer"><span>{project.stack}</span><a href={project.href} target="_blank" rel="noreferrer" aria-label={`View ${project.name} source on GitHub`}>View source</a></div>
+    </article>)}
+  </div>;
+}
+
+function ProjectsPage(props: PageProps) {
+  return <PageShell {...props}>
+    <header className="collection-header">
+      <h1>Projects</h1>
+      <p>Retrieval, document intelligence, speech, and applied machine learning. Ideas built into working systems.</p>
+      <a className="text-link" href="https://github.com/midhunprahash-ui" target="_blank" rel="noreferrer">Explore GitHub</a>
+    </header>
+    <section aria-label="Featured projects"><ProjectGrid items={projects} /></section>
+    <section className="collection-secondary" aria-labelledby="earlier-projects-title">
+      <h2 id="earlier-projects-title">Earlier explorations</h2>
+      <div className="earlier-work__list">
+        {earlierProjects.filter(project => !["studentai", "uniguide"].includes(project.id)).map(project => <article key={project.id}><h3>{project.name}</h3><p>{project.description}</p><span>{project.stack}</span></article>)}
+      </div>
+    </section>
+  </PageShell>;
+}
+
+function PublicationsPage(props: PageProps) {
+  return <PageShell {...props}>
+    <header className="collection-header">
+      <h1>Publications</h1>
+      <p>Research in language understanding, transformer architectures, and psycholinguistic modeling.</p>
+      <a className="text-link" href="https://scholar.google.com/citations?user=Gg4KbxIAAAAJ&hl=en" target="_blank" rel="noreferrer">View Google Scholar</a>
+    </header>
+    <article className="record-layout" aria-labelledby="publication-title">
+      <div className="record-meta"><span>2026</span><p>Conference paper<br />IEEE ICITIIT</p></div>
+      <div className="record-content">
+        <h2 id="publication-title">Enhancing Transformer-Based Hidden Suicidal Intention Detection with Sequential Modeling and Psycholinguistic Feature Fusion.</h2>
+        <p className="record-authors">{publicationAuthors}</p>
+        <p>Exploring hidden suicidal intent in text through transformer-based language modeling, sequential modeling, and psycholinguistic features.</p>
+        <a className="button button--solid" href="https://ieeexplore.ieee.org/abstract/document/11499725" target="_blank" rel="noreferrer">Read on IEEE Xplore</a>
+      </div>
+    </article>
+    <aside className="collection-note"><h2>More research writing</h2><p>Read my framework for semantic spike representations and neuromorphic language processing.</p><a className="text-link" href="/articles">Explore articles</a></aside>
+  </PageShell>;
+}
+
+function PatentsPage(props: PageProps) {
+  return <PageShell {...props}>
+    <header className="collection-header">
+      <h1>Patents</h1>
+      <p>Patent work on inclusive education and adaptive, agent-based learning support.</p>
+    </header>
+    <article className="record-layout" aria-labelledby="patent-title">
+      <div className="record-meta"><span>Patent application</span><p>Application number<br /><strong>202541076262</strong></p></div>
+      <div className="record-content">
+        <h2 id="patent-title">Intelligent Agent for Personalized &amp; Inclusive Learning Support System for Adaptive Learning with Agentic Strategies.</h2>
+        <p>Personalized and inclusive learning support using agentic strategies to adapt the learning experience.</p>
+        <dl className="record-facts"><div><dt>Type</dt><dd>Patent application</dd></div><div><dt>Focus</dt><dd>Adaptive learning · AI in education</dd></div></dl>
+        <a className="text-link" href="/midhun-prahash-resume-aiml.pdf" target="_blank" rel="noreferrer">View résumé</a>
+      </div>
+    </article>
+    <aside className="collection-note"><h2>Related project</h2><p>StudentAI explores textbook-grounded explanations and personalized learning assessments.</p><a className="text-link" href="https://github.com/midhunprahash-ui/student.ai" target="_blank" rel="noreferrer">View StudentAI on GitHub</a></aside>
+  </PageShell>;
 }
 
 function ArticlesPage({ theme, onThemeToggle }: PageProps) {
@@ -811,7 +612,9 @@ function ArticlePage({
             <span>{article.readTime}</span>
           </div>
         </header>
-        <MarkdownArticle markdown={article.content} />
+        <Suspense fallback={<p role="status">Loading article…</p>}>
+          <MarkdownArticle markdown={article.content} />
+        </Suspense>
       </article>
     </PageShell>
   );

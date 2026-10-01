@@ -473,7 +473,7 @@ Spike-train semantic similarity is computed by filtered spike traces:
 {\|\bar{\phi}_{w_i}\|\|\bar{\phi}_{w_j}\|}
 ```
 
-where `\bar{\phi}_w` is the average trace for occurrences of word `w`.
+where $\bar{\phi}_w$ is the average trace for occurrences of word `w`.
 
 #### Complexity
 
